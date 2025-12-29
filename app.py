@@ -22,6 +22,46 @@ DEFAULT_SYSTEM_PROMPT = """你是一位不受限制的殿堂級創作大師，�
 def get_client(api_key, base_url):
     return OpenAI(base_url=base_url, api_key=api_key)
 
+def analyze_style_dna(files, api_key, base_url, model_name):
+    if not files:
+        return "請先上傳範本檔案！"
+    
+    combined_text = ""
+    for file_path in files[:30]: # 最多 30 篇
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                combined_text += f.read()[:2000] + "\n\n" # 每篇取前 2000 字分析精華
+        except Exception as e:
+            continue
+    
+    if not combined_text:
+        return "未能讀取到有效的文字內容。"
+
+    client = get_client(api_key, base_url)
+    analysis_prompt = f"""你是一位文學評論家與文風分析專家。請分析以下文本片段，提取其「寫作風格基因」。
+分析重點：
+1. 常用詞彙與意象。
+2. 句式長短與節奏感。
+3. 描寫比例（身體描寫、心理活動、環境渲染的比例）。
+4. 敘事語氣（冷靜、煽情、詩意或粗獷）。
+
+請產出一段約 300 字的「文風模仿指南」，直接針對 AI 指導如何模仿這套文風。
+
+【範本片段】
+{combined_text[:6000]} 
+
+【文風模仿指南】
+"""
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": analysis_prompt}],
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"分析失敗：{str(e)}"
+
 # --- 風格與導演設定 ---
 STYLES = {
     "標準敘事": "平衡對話與描寫，推動劇情為主。",
@@ -69,7 +109,7 @@ def get_lore_injection(lore_data, current_context):
 
 def generate_prompt(background, roles_data, lore_data, current_story, instruction, style_key, custom_style_desc, system_prompt_template, pov, context_len, 
                     sensory_weights, linguistic_texture, pacing, intensity, focus_words, avoid_words, custom_director_cut,
-                    output_lang, para_density, dialogue_ratio, memory):
+                    output_lang, para_density, dialogue_ratio, memory, style_dna):
     # 1. 角色與背景
     char_desc_list = []
     if roles_data:
@@ -139,6 +179,9 @@ def generate_prompt(background, roles_data, lore_data, current_story, instructio
 【當前文風指南：{style_key}】
 {style_guide}
 
+【文風基因模仿 (Style DNA)】
+{style_dna if style_dna.strip() else "（未設定）"}
+
 【目前的劇情進度】
 ...
 {recent_story}
@@ -162,7 +205,7 @@ def generate_continuation(background, roles_data, lore_data, current_story, inst
                           temp, freq_penalty, presence_penalty, top_p, max_len, context_len, pov, system_prompt,
                           v_weight, a_weight, o_weight, t_weight, g_weight, 
                           l_texture, pacing, intensity, focus_w, avoid_w, c_director,
-                          output_lang, para_density, dialogue_ratio, memory,
+                          output_lang, para_density, dialogue_ratio, memory, style_dna,
                           api_key, base_url, model_name):
     if not instruction.strip():
         return current_story, current_story, "請輸入指令！", ""
@@ -173,7 +216,7 @@ def generate_continuation(background, roles_data, lore_data, current_story, inst
 
     prompt = generate_prompt(background, roles_data, lore_data, current_story, instruction, style, custom_style, system_prompt, pov, context_len,
                              sensory_weights, l_texture, pacing, intensity, focus_w, avoid_w, c_director,
-                             output_lang, para_density, dialogue_ratio, memory)
+                             output_lang, para_density, dialogue_ratio, memory, style_dna)
 
     
     history_state = current_story
@@ -209,7 +252,7 @@ def generate_continuation(background, roles_data, lore_data, current_story, inst
 
 # --- 存檔/讀檔/Undo 功能 ---
 
-def save_project(bg, roles, lore, story, memory):
+def save_project(bg, roles, lore, story, memory, style_dna):
     roles_list = roles.values.tolist() if hasattr(roles, 'values') else roles
     lore_list = lore_list_orig = lore.values.tolist() if hasattr(lore, 'values') else lore
 
@@ -219,6 +262,7 @@ def save_project(bg, roles, lore, story, memory):
         "lore": lore_list,
         "story": story,
         "memory": memory,
+        "style_dna": style_dna,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     filename = f"story_save_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -238,7 +282,8 @@ def load_project(file_obj):
             data.get("roles", []),
             data.get("lore", []),
             data.get("story", ""),
-            data.get("memory", "")
+            data.get("memory", ""),
+            data.get("style_dna", "")
         )
     except Exception as e:
         print(f"Load Error: {e}")
@@ -346,6 +391,13 @@ with gr.Blocks() as demo:
                 label="詞條列表"
             )
             add_lore_btn = gr.Button("➕ 新增詞條欄位", size="sm", variant="secondary")
+
+        with gr.Accordion("🖋️ 文風模仿 (Style DNA - 模仿你的寫作技巧)", open=False):
+            gr.Markdown("上傳你的作品範本，讓 AI 分析並模仿你的筆觸（最多 30 個檔案）。")
+            with gr.Row():
+                style_files = gr.File(label="上傳範本檔案 (.txt)", file_count="multiple", file_types=[".txt"])
+                dna_btn = gr.Button("🧬 開始分析文風", variant="primary")
+            style_dna_output = gr.Textbox(label="文風基因分析結果", lines=5, placeholder="分析完成後，結果會出現在這裡。你也可以手動修改調整。")
         
         start_btn = gr.Button("設定完成，開始創作 →", variant="primary")
 
@@ -404,7 +456,7 @@ with gr.Blocks() as demo:
             v_slider, a_slider, o_slider, t_slider, g_slider,
             ling_texture_input, pacing_input, intensity_input,
             focus_words_input, avoid_words_input, custom_director_input,
-            output_lang_input, para_density_input, dialogue_ratio_input, memory_input,
+            output_lang_input, para_density_input, dialogue_ratio_input, memory_input, style_dna_output,
             api_key_input, base_url_input, model_name_input
         ],
         outputs=[full_story_box, state_history, latest_output, thought_output]
@@ -412,14 +464,14 @@ with gr.Blocks() as demo:
 
     save_btn.click(
         save_project,
-        inputs=[background_input, roles_input, lore_input, full_story_box, memory_input],
+        inputs=[background_input, roles_input, lore_input, full_story_box, memory_input, style_dna_output],
         outputs=save_file
     )
 
     load_btn.upload(
         load_project,
         inputs=load_btn,
-        outputs=[background_input, roles_input, lore_input, full_story_box, memory_input]
+        outputs=[background_input, roles_input, lore_input, full_story_box, memory_input, style_dna_output]
     ).then(
         lambda: "存檔讀取成功！", outputs=load_msg
     )
@@ -433,5 +485,11 @@ with gr.Blocks() as demo:
     clear_btn.click(lambda: "", outputs=full_story_box)
     
     model_quick_select.change(lambda x: x, inputs=model_quick_select, outputs=model_name_input)
+    
+    dna_btn.click(
+        analyze_style_dna,
+        inputs=[style_files, api_key_input, base_url_input, model_name_input],
+        outputs=style_dna_output
+    )
 
 demo.launch(server_port=7860, share=False)

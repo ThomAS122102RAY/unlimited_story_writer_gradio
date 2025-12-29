@@ -68,6 +68,7 @@ Visit the [Ollama Model Library](https://ollama.com/library) to see all availabl
 ## 🌟 v3.0 Feature Highlights
 
 * **🧠 Story Memory**: A dedicated context area that stays in the AI's mind regardless of story length.
+* **🖋️ Style DNA Mimicry**: **[New]** Upload your past works, and the AI will analyze your specific writing style and tone to perfectly mimic your personal touch.
 * **🌍 Multi-language**: Supports output in Traditional Chinese, Simplified Chinese, English, Japanese, and Korean.
 * **🖋️ Format Control**: Customize "Dialogue Ratio" and "Paragraph Density."
 * **👁️ Sensory Weights**: Adjust percentages for Visual, Auditory, Tactile, and other sensory descriptions.
