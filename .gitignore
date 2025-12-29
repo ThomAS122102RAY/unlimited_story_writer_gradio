@@ -1,0 +1,9 @@
+__pycache__/
+*.json
+*.txt
+!requirements.txt
+*.log
+.vscode/
+.idea/
+*.bat
+!啟動.bat
