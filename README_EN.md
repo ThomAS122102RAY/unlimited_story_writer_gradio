@@ -1,67 +1,82 @@
-# 📝 AI Deep Writing Assistant v2.2 - Installation & Usage Guide
+# 📝 AI Deep Writing Assistant v3.0 - Installation & Usage Guide
 
-Hello! This is a local AI writing tool that uses your graphics card for computation. Since it is self-hosted, it is completely free, private, and secure. Please follow the steps below to install:
+Hello! This is a local AI writing tool that uses your graphics card for computation. Since it is self-hosted, it is completely free, private, and secure. Version 3.0 adds Plot Memory, Language Selection, and Model Quick-Select.
 
 ---
 
 ## ⚠️ Recommended Specifications
 
 * **OS**: Windows 10 or 11
-* **GPU**: NVIDIA GPU recommended (8GB+ VRAM for a better experience).
-* **Disk**: Please reserve about 20GB of space (for downloading AI models).
+* **GPU**: NVIDIA GPU recommended
+    * **Elite Experience**: 16GB+ VRAM (can run `gemma2:27b` or `command-r`)
+    * **Smooth Experience**: 8GB - 12GB VRAM (can run `gemma2:9b` or `mistral-nemo`)
+* **Disk**: Please reserve about 20GB - 40GB space (for storing AI models).
 
 ---
 
 ## Step 1: Environment Setup (One-time only)
 
 ### 1. Install Python
-* Download from the official website: [Python 3.10 Download Link](https://www.python.org/downloads/)
-* **Important:** During installation, make sure to check **"Add Python to PATH"** at the bottom, otherwise the program will not run.
+* [Download Link (Python 3.10)](https://www.python.org/downloads/)
+* **Important:** Make sure to check **"Add Python to PATH"** during installation.
 
 ### 2. Install AI Engine (Ollama)
-* Download and install from the official website: [Ollama Official Site](https://ollama.com/)
-* After installation, confirm that a small "Alpaca" icon appears in the system tray (bottom right corner of your screen).
+* [Ollama Official Site](https://ollama.com/)
+* After installation, confirm that the "Alpaca" icon appears in your system tray.
 
-### 3. Download AI Model
-* Press `Win + R` on your keyboard, type `cmd`, and press Enter to open the terminal.
-* Copy and paste the following command and press Enter (Download is about 15GB, please be patient):
-```bash
-ollama run gemma2:27b
-```
-*(Note: If your GPU memory is less than 10GB and it feels slow, please use `ollama run gemma2:9b` instead)*
-* When the dialogue cursor appears, it means success. You can close the window.
+### 3. Project Configuration
+1. Extract the project folder.
+2. Type `cmd` in the folder's address bar and press Enter.
+3. Run the following command to install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ---
 
-## Step 2: Configure Writing Assistant (One-time only)
+## Step 2: How to Change/Download New Models (From Scratch)
 
-1. Extract the compressed package to your desktop or preferred location.
-2. Enter the extracted folder.
-3. Click on the **address bar** at the top of the folder window, type `cmd`, and press Enter.
-4. In the black terminal window, type the following command to install the necessary packages:
-```bash
-pip install -r requirements.txt
-```
-5. Wait for it to finish. Once you see `Successfully installed...`, you can close the window.
+If you want to try different AI "personalities," follow these steps:
+
+### 1. Pick a Model
+Visit the [Ollama Model Library](https://ollama.com/library) to see all available options. Recommendations:
+* `gemma2:27b`: High logic and detailed writing (requires high VRAM).
+* `command-r`: Designed for long-form text and roleplay; very few moral lectures.
+* `mistral-nemo`: Great balance, suitable for 12GB VRAM cards.
+
+### 2. Download the Model
+1. Press `Win + R`, type `cmd`, and press Enter.
+2. Type `ollama run <model_name>`. For example, to get `command-r`:
+   ```bash
+   ollama run command-r
+   ```
+3. Wait for the download to complete. When the chat prompt appears, the model is installed.
+4. **Just close the window**; the model handles everything in the background.
 
 ---
 
 ## Step 3: Start Writing
 
-1. Double-click **`啟動.bat`** in the folder.
-2. A black terminal window will pop up, **please do not close it**.
-3. Your browser will automatically open the writing interface (if not, manually enter `http://127.0.0.1:7860`).
-4. Enjoy your creation!
+1. Double-click **`啟動.bat`**.
+2. Once the browser opens, in the **"⚙️ Core Settings"** tab:
+   - **Model Quick-Select**: Select your downloaded model from the dropdown (or type the name manually).
+   - **Story Memory**: For long stories, input a summary of key events here. The AI will never forget these details.
+3. Click **"Setup Finished, Start Writing →"**.
+
+---
+
+## 🌟 v3.0 Feature Highlights
+
+* **🧠 Story Memory**: A dedicated context area that stays in the AI's mind regardless of story length.
+* **🌍 Multi-language**: Supports output in Traditional Chinese, Simplified Chinese, English, Japanese, and Korean.
+* **🖋️ Format Control**: Customize "Dialogue Ratio" and "Paragraph Density."
+* **👁️ Sensory Weights**: Adjust percentages for Visual, Auditory, Tactile, and other sensory descriptions.
 
 ---
 
 ## ❓ FAQ
 
-* **Q: Cannot open, showing "Connection refused"?**
-  * A: Please make sure Ollama (the Alpaca icon) is running in the system tray.
-
-* **Q: The terminal window flashes and closes immediately?**
-  * A: Usually, it's because Python is not installed correctly or the package installation command in Step 2 was not executed.
-
-* **Q: Generation speed is very slow?**
-  * A: This runs locally and depends on your GPU performance. You can adjust the "Response Length" to be shorter in the right panel or use a smaller model (`gemma2:9b`).
+* **Q: No response after clicking generate?**
+  * A: Check the black terminal window for errors and ensure Ollama (alpaca icon) is running.
+* **Q: It's very slow after changing models?**
+  * A: If the model is too large (e.g., a 27b model) for your GPU's VRAM, the system will switch to CPU, which is much slower. Try a smaller model (e.g., the 9b series).
