@@ -65,19 +65,38 @@ Visit the [Ollama Model Library](https://ollama.com/library) to see all availabl
 
 ---
 
-## 🌟 v3.0 Feature Highlights
-
+## 🌟 v3.1 Feature Highlights (Latest Update)
+ 
+* **☁️ Online Model Support**: **[New]** Supports direct connection to **xAI (Grok)**, **OpenAI (GPT-4o)**, **DeepSeek**, and **OpenRouter**.
+    * Enjoy top-tier model writing capabilities via API without needing a high-end GPU.
+    * Supports latest models like **Grok-2/3**, **Claude 3.5 Sonnet**.
+* **🛠️ Automatic Parameter Optimization**: Automatically adjusts API parameters for reasoning models like **Grok Reasoning** or **OpenAI o1** to avoid errors.
 * **🧠 Story Memory**: A dedicated context area that stays in the AI's mind regardless of story length.
-* **🖋️ Style DNA Mimicry**: **[New]** Upload your past works, and the AI will analyze your specific writing style and tone to perfectly mimic your personal touch.
+* **🖋️ Style DNA Mimicry**: **[Enhanced]** Upload your past works, and the AI will analyze your specific writing style. You can even create a specialized "Model Avatar".
 * **🌍 Multi-language**: Supports output in Traditional Chinese, Simplified Chinese, English, Japanese, and Korean.
-* **🖋️ Format Control**: Customize "Dialogue Ratio" and "Paragraph Density."
 * **👁️ Sensory Weights**: Adjust percentages for Visual, Auditory, Tactile, and other sensory descriptions.
-
+ 
 ---
-
+ 
+## ☁️ How to Connect Online Models (Grok, OpenAI, DeepSeek)
+ 
+If you prefer not to use local GPU computation or want to try smarter online models, follow these steps:
+ 
+1. **Switch Provider**: In the "⚙️ Core Settings" tab, find the **"Provider Presets"** dropdown menu.
+2. **Select Platform**: Currently supports xAI (Grok), OpenAI, DeepSeek, OpenRouter, etc.
+3. **Enter API Key**:
+   * **Grok**: Get it from the [xAI Console](https://console.x.ai/).
+   * **OpenAI**: Get it from the [OpenAI Platform](https://platform.openai.com/api-keys).
+   * **DeepSeek**: Get it from the [DeepSeek Platform](https://platform.deepseek.com/).
+4. **Test Connection**: After entering the Key, click "📶 Test Connection". A ✅ indicates success.
+ 
+---
+ 
 ## ❓ FAQ
-
+ 
 * **Q: No response after clicking generate?**
-  * A: Check the black terminal window for errors and ensure Ollama (alpaca icon) is running.
-* **Q: It's very slow after changing models?**
+  * A: Check the black terminal window for errors and ensure Ollama is running. If using online models, check your internet connection and API Key balance.
+* **Q: It's very slow after changing local models?**
   * A: If the model is too large (e.g., a 27b model) for your GPU's VRAM, the system will switch to CPU, which is much slower. Try a smaller model (e.g., the 9b series).
+* **Q: Error 400 with Grok or o1 models?**
+  * A: Please ensure you are updated to the latest version (v3.1). We have fixed the issue where reasoning models did not support certain parameters.
