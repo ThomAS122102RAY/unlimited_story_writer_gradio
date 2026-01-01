@@ -260,6 +260,65 @@ def analyze_story_chronicle(files, api_key, base_url, model_name):
     except Exception as e:
         return f"編纂失敗：{str(e)}"
 
+def rewrite_with_style(style_files, target_text, instruction, output_lang, api_key, base_url, model_name):
+    if not target_text:
+        return "請輸入要改寫的文本 (Target Text)。"
+    
+    # 1. 讀取風格參考
+    style_ref_text = ""
+    if style_files:
+        for file_path in style_files:
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    style_ref_text += f.read()[:1500] + "\n\n"
+            except:
+                continue
+    
+    style_prompt = ""
+    if style_ref_text:
+        style_prompt = f"""
+【風格參考文本 (Style Reference)】
+請分析並提取以下文本的「文筆」、「用詞」、「氛圍」與「節奏」：
+{style_ref_text[:4000]}
+"""
+
+    prompt = f"""
+你是一位殿堂級的文學修辭大師。
+你的任務是將【目標文本】進行「風格重寫」。
+
+{style_prompt}
+
+【改寫指令 (Instruction)】
+{instruction if instruction else "請將目標文本改寫為上述的參考風格。若無參考風格，請單純潤飾優化。"}
+
+【目標文本 (Target Text)】
+{target_text}
+
+【輸出要求】
+1. 嚴格保留原本的劇情與動作，不可篡改原意。
+2. 全力模仿【風格參考文本】的筆觸（如：華麗、冷硬、古風、意識流等）。
+3. 使用 {output_lang} 輸出。
+4. 僅輸出改寫後的正文，不要有任何前言後語。
+
+【改寫結果】
+"""
+    
+    try:
+        client = get_client(api_key, base_url)
+        # 動態參數調整
+        api_kwargs = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.8,
+            "max_tokens": 4000
+        }
+        
+        response = client.chat.completions.create(**api_kwargs)
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        return f"改寫失敗：{str(e)}"
+
 def create_ollama_model(model_name, base_model, system_prompt, style_dna):
     # 組合 Modelfile
     modelfile_content = f"""
@@ -732,6 +791,28 @@ with gr.Blocks() as demo:
                         thought_output = gr.Markdown("...")
                     
                     latest_output = gr.Markdown("...")
+    
+    with gr.Tab("3. 改寫與風格轉換 (Style Rewrite)"):
+        gr.Markdown("### 🎭 風格遷移與改寫")
+        gr.Markdown("上傳你想模仿的小說片段 (Style Reference)，然後輸入你寫的草稿。AI 會幫你把草稿「翻譯」成大師的文筆。")
+        
+        with gr.Row():
+            with gr.Column():
+                rewrite_style_files = gr.File(label="1. 上傳風格範本 (Style Reference)", file_count="multiple", file_types=[".txt"])
+                rewrite_instruction = gr.Textbox(label="2. 改寫指導 (Instruction)", placeholder="例如：請讓語氣更冷漠一點、增加更多環境描寫...", lines=2)
+                rewrite_lang_input = gr.Dropdown(["繁體中文", "簡體中文", "English", "日本語"], value="繁體中文", label="輸出語言")
+            
+            with gr.Column():
+                target_text_input = gr.Textbox(label="3. 待改寫的草稿 (Target Text)", lines=15, placeholder="貼上你想被改寫的文字...")
+        
+        rewrite_btn = gr.Button("✨ 開始風格改寫", variant="primary")
+        rewrite_output = gr.Textbox(label="改寫結果", lines=15, interactive=True)
+        
+        rewrite_btn.click(
+            rewrite_with_style,
+            inputs=[rewrite_style_files, target_text_input, rewrite_instruction, rewrite_lang_input, api_key_input, base_url_input, model_name_input],
+            outputs=rewrite_output
+        )
 
     # --- 事件綁定 ---
     
