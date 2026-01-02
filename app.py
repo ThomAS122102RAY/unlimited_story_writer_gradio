@@ -817,7 +817,7 @@ with gr.Blocks() as demo:
                 rewrite_style_files = gr.File(label="1. 上傳風格範本 (Style Reference)", file_count="multiple", file_types=[".txt"])
                 rewrite_instruction = gr.Textbox(label="2. 改寫指導 (Instruction)", placeholder="例如：請讓語氣更冷漠一點、增加更多環境描寫...", lines=2)
                 rewrite_lang_input = gr.Dropdown(["繁體中文", "簡體中文", "English", "日本語"], value="繁體中文", label="輸出語言")
-                rewrite_len_slider = gr.Slider(500, 32000, value=4000, step=500, label="目標輸出長度 (Target Length)", info="若發現被截斷，請調大此數值")
+                rewrite_len_slider = gr.Slider(500, 100000, value=4000, step=500, label="目標輸出長度 (Target Length)", info="若發現被截斷，請調大此數值")
             
             with gr.Column():
                 target_text_input = gr.Textbox(label="3. 待改寫的草稿 (Target Text)", lines=15, placeholder="貼上你想被改寫的文字...")
