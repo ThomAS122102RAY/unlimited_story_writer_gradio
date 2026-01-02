@@ -260,9 +260,12 @@ def analyze_story_chronicle(files, api_key, base_url, model_name):
     except Exception as e:
         return f"編纂失敗：{str(e)}"
 
-def rewrite_with_style(style_files, target_text, instruction, output_lang, api_key, base_url, model_name):
+def rewrite_with_style(style_files, target_text, instruction, output_lang, api_key, base_url, model_name, max_len_target):
     if not target_text:
         return "請輸入要改寫的文本 (Target Text)。"
+    
+    # 計算輸入文字的長度，作為參考
+    input_len = len(target_text)
     
     # 1. 讀取風格參考
     style_ref_text = ""
@@ -298,7 +301,8 @@ def rewrite_with_style(style_files, target_text, instruction, output_lang, api_k
 1. 嚴格保留原本的劇情與動作，不可篡改原意。
 2. 全力模仿【風格參考文本】的筆觸（如：華麗、冷硬、古風、意識流等）。
 3. 使用 {output_lang} 輸出。
-4. 僅輸出改寫後的正文，不要有任何前言後語。
+4. **長度強制要求**：請輸出約 {max_len_target} 字 (或至少與原文長度相當)。禁止大幅縮減內容。
+5. 僅輸出改寫後的正文，不要有任何前言後語。
 
 【改寫結果】
 """
@@ -306,15 +310,27 @@ def rewrite_with_style(style_files, target_text, instruction, output_lang, api_k
     try:
         client = get_client(api_key, base_url)
         # 動態參數調整
+        # 為了避免截斷，我們設定一個比較大的 buffer，例如使用者設定 2000，我們給主要 API 4000 或更高
+        # 但如果是 local model，這會受限於 context window
+        api_max_tokens = int(max_len_target) + 1000 
+        
         api_kwargs = {
             "model": model_name,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.8,
-            "max_tokens": 4000
+            "max_tokens": api_max_tokens 
         }
         
+        # 針對不支援 penalty 的模型進行過濾
+        if "reasoning" not in model_name.lower() and "o1-" not in model_name.lower():
+             # 使用預設值，不傳入
+             pass
+
         response = client.chat.completions.create(**api_kwargs)
         return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        return f"改寫失敗：{str(e)}"
 
     except Exception as e:
         return f"改寫失敗：{str(e)}"
@@ -801,6 +817,7 @@ with gr.Blocks() as demo:
                 rewrite_style_files = gr.File(label="1. 上傳風格範本 (Style Reference)", file_count="multiple", file_types=[".txt"])
                 rewrite_instruction = gr.Textbox(label="2. 改寫指導 (Instruction)", placeholder="例如：請讓語氣更冷漠一點、增加更多環境描寫...", lines=2)
                 rewrite_lang_input = gr.Dropdown(["繁體中文", "簡體中文", "English", "日本語"], value="繁體中文", label="輸出語言")
+                rewrite_len_slider = gr.Slider(500, 10000, value=2500, step=500, label="目標輸出長度 (Target Length)", info="若發現被截斷，請調大此數值")
             
             with gr.Column():
                 target_text_input = gr.Textbox(label="3. 待改寫的草稿 (Target Text)", lines=15, placeholder="貼上你想被改寫的文字...")
@@ -810,7 +827,7 @@ with gr.Blocks() as demo:
         
         rewrite_btn.click(
             rewrite_with_style,
-            inputs=[rewrite_style_files, target_text_input, rewrite_instruction, rewrite_lang_input, api_key_input, base_url_input, model_name_input],
+            inputs=[rewrite_style_files, target_text_input, rewrite_instruction, rewrite_lang_input, api_key_input, base_url_input, model_name_input, rewrite_len_slider],
             outputs=rewrite_output
         )
 
